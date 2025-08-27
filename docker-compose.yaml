@@ -1,20 +1,24 @@
 # docker-compose.yml
 # -----------------------------------------------------------------------------
 # Define a stack para ser implantada no Portainer.
+# VERSÃO CORRIGIDA
 # -----------------------------------------------------------------------------
 version: '3.8'
 
 services:
   # Nome do nosso serviço/container
   excel-converter:
-    # Imagem pré-construída do Docker Hub
-    image: leonardofurlan/excel-converter-app:latest
+    # --- MUDANÇA PRINCIPAL ---
+    # Em vez de puxar uma imagem pronta, instruímos o Docker a construir
+    # uma nova imagem a partir do Dockerfile presente neste mesmo diretório.
+    build: .
+    # Damos um nome para a imagem construída localmente para fácil identificação.
+    image: excel-converter-local:latest
     container_name: excel-converter-app
     restart: unless-stopped
     
-    # <-- AJUSTE ADICIONADO AQUI
-    # Define uma verificação de saúde explícita para garantir que o container não seja reiniciado incorretamente.
-    # Ela verifica se a aplicação web está respondendo na porta 8000 a cada 30 segundos.
+    # O healthcheck que você adicionou está ótimo e será mantido.
+    # Ele verifica se a aplicação web está respondendo na porta 8000.
     healthcheck:
       test: ["CMD", "python", "-c", "import sys, urllib.request; sys.exit(0) if urllib.request.urlopen('http://localhost:8000/').getcode() == 200 else sys.exit(1)"]
       interval: 30s
@@ -22,27 +26,28 @@ services:
       retries: 5
       start_period: 60s
 
+    # --- BOA PRÁTICA (OPCIONAL) ---
+    # Mapeamos a pasta de saída para o sistema de arquivos do host.
+    # Isso permite que os arquivos gerados persistam mesmo se o container for removido
+    # e facilita o acesso aos resultados.
+    volumes:
+      - ./temp_outputs:/app/temp_outputs
+
     networks:
       # Conecta o container à rede externa do Traefik
       - traefik-public
     labels:
-      # --- Configuração do Traefik ---
+      # --- Configuração do Traefik (sem alterações) ---
       - "traefik.enable=true"
       - "traefik.constraint-label=traefik-public"
       - "traefik.docker.network=traefik-public"
-
-      # --- Roteamento HTTPS ---
       - "traefik.http.routers.excel-converter.rule=Host(`jse.atospd.com`)"
       - "traefik.http.routers.excel-converter.entrypoints=https"
       - "traefik.http.routers.excel-converter.tls=true"
       - "traefik.http.routers.excel-converter.tls.certresolver=le"
-      
-      # --- Roteamento HTTP com redirecionamento ---
       - "traefik.http.routers.excel-converter-http.rule=Host(`jse.atospd.com`)"
       - "traefik.http.routers.excel-converter-http.entrypoints=http"
       - "traefik.http.routers.excel-converter-http.middlewares=https-redirect" 
-
-      # --- Serviço ---
       - "traefik.http.services.excel-converter.loadbalancer.server.port=8000"
 
 networks:
