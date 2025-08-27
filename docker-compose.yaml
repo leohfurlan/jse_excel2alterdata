@@ -12,11 +12,22 @@ services:
     networks:
       - traefik-public
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.excel-converter.rule=Host(`jse.atospd.com`)"
-      - "traefik.http.routers.excel-converter.entrypoints=websecure"
-      - "traefik.http.services.excel-converter.loadbalancer.server.port=8000"
-      - "traefik.http.routers.excel-converter.tls.certresolver=le"
+      # >>>>> labels obrigatórias para o Traefik enxergar
+      - traefik.enable=true
+      - traefik.constraint-label=traefik-public
+      - traefik.docker.network=traefik-public
+
+      # >>>>> roteamento HTTPS
+      - traefik.http.routers.excel-converter.rule=Host(`jse.atospd.com`)
+      - traefik.http.routers.excel-converter.entrypoints=https
+      - traefik.http.routers.excel-converter.tls=true
+      - traefik.http.routers.excel-converter.tls.certresolver=le
+      - traefik.http.routers.excel-converter-http.rule=Host(`jse.atospd.com`)
+      - traefik.http.routers.excel-converter-http.entrypoints=http
+      - traefik.http.routers.excel-converterp-http.middlewares=https-redirect 
+
+      # Porta onde o Apache/PHP escuta DENTRO do container
+      - traefik.http.services.excel-converter.loadbalancer.server.port=80
 
 networks:
   traefik-public:
