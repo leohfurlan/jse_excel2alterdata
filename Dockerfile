@@ -21,6 +21,7 @@ COPY . .
 EXPOSE 8000
 
 # 6. Comando de Execução: Define como iniciar a aplicação usando Gunicorn.
-# O Gunicorn é um servidor WSGI robusto para produção.
-# "--bind 0.0.0.0:8000" faz o servidor aceitar conexões de fora do container.
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app:app"]
+# <-- CORREÇÃO AQUI
+# Em vez de chamar 'gunicorn' diretamente, usamos 'python -m gunicorn'.
+# Isso garante que o executável seja encontrado no ambiente Python.
+CMD ["python", "-m", "gunicorn", "--bind", "0.0.0.0:8000", "app:app"]

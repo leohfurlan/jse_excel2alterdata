@@ -6,3 +6,4 @@ python-dateutil
 xlrd
 xlsxwriter
 Flask
+gunicorn
