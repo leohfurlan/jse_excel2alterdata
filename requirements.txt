@@ -1,0 +1,8 @@
+pandas
+openpyxl
+pyyaml
+rapidfuzz
+python-dateutil
+xlrd
+xlsxwriter
+Flask

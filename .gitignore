@@ -1,0 +1,21 @@
+# Arquivo .gitignore para o projeto Python/Flask
+
+# Ambiente Virtual
+.venv/
+venv/
+
+# Arquivos temporários do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Pastas de upload e output da aplicação
+temp_uploads/
+temp_outputs/
+samples/
+output/
+
+# Arquivos de IDEs
+.vscode/
+.idea/

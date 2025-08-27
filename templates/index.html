@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor de Planilhas para Alterdata</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .file-list-item { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-glow { box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-3xl mx-auto">
+        <div class="bg-white rounded-2xl shadow-lg p-8 md:p-12">
+            
+            <div class="text-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Conversor para Alterdata</h1>
+                <p class="text-gray-500 mt-2">Anexe uma ou mais planilhas para converter em um único arquivo de importação.</p>
+            </div>
+
+            {% if error %}
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6" role="alert">
+                    <p class="font-bold">Erro</p>
+                    <p>{{ error }}</p>
+                </div>
+            {% endif %}
+
+            <form action="/" method="post" enctype="multipart/form-data" id="upload-form">
+                <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-blue-500 transition-colors duration-300 bg-gray-50">
+                    <input type="file" name="files" id="file-input" multiple class="hidden" accept=".xls,.xlsx,.csv">
+                    <div class="flex flex-col items-center">
+                        <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        <p class="text-gray-600">
+                            <span class="font-semibold text-blue-600">Clique para selecionar</span> ou arraste os arquivos aqui
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">XLS, XLSX ou CSV</p>
+                    </div>
+                </div>
+                
+                <div id="file-list" class="mt-4 space-y-2"></div>
+
+                <div class="mt-8 text-center">
+                    <button type="submit" id="submit-button" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed btn-glow" disabled>
+                        Processar Arquivos
+                    </button>
+                </div>
+            </form>
+
+            {% if summary %}
+            <div id="results" class="mt-12 border-t pt-8">
+                <h2 class="text-2xl font-bold text-center text-gray-900 mb-6">Processamento Concluído</h2>
+                
+                {% if inconsistencies %}
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-800 p-4 rounded-lg mb-6" role="alert">
+                    <p class="font-bold mb-2">Foram encontradas as seguintes inconsistências:</p>
+                    <ul class="list-disc list-inside text-sm">
+                        {% for item in inconsistencies %}
+                            <li><strong>{{ item.arquivo.split('\\')[-1] }} (Aba: {{ item.aba }}):</strong> {{ item.erro }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <div class="bg-gray-100 rounded-lg p-6 flex flex-col md:flex-row justify-around text-center">
+                    <div>
+                        <p class="text-sm text-gray-500">Arquivos Processados</p>
+                        <p class="text-2xl font-bold text-blue-600">{{ summary.arquivos_encontrados }}</p>
+                    </div>
+                    <div class="mt-4 md:mt-0">
+                        <p class="text-sm text-gray-500">Linhas Exportadas</p>
+                        <p class="text-2xl font-bold text-green-600">{{ summary.linhas_exportadas }}</p>
+                    </div>
+                    <div class="mt-4 md:mt-0">
+                        <p class="text-sm text-gray-500">Inconsistências</p>
+                        <p class="text-2xl font-bold {{ 'text-red-600' if summary.tem_inconsistencias else 'text-gray-600' }}">
+                            {{ 'Sim' if summary.tem_inconsistencias else 'Não' }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-8 text-center space-y-3">
+                    <h3 class="text-lg font-semibold text-gray-700">Seus arquivos estão prontos:</h3>
+                    <div class="flex flex-wrap justify-center gap-4">
+                        <a href="{{ download_files.xlsx }}" class="bg-green-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-green-700 transition-colors">Baixar Resultado (.xlsx)</a>
+                        <a href="{{ download_files.csv }}" class="bg-gray-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-gray-700 transition-colors">Baixar Resultado (.csv)</a>
+                        {% if summary.tem_inconsistencias %}
+                            <a href="{{ download_files.inconsistencias }}" class="bg-red-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-red-700 transition-colors">Baixar Inconsistências</a>
+                        {% endif %}
+                        <a href="{{ download_files.mapeamento }}" class="bg-yellow-500 text-white font-semibold py-2 px-5 rounded-lg hover:bg-yellow-600 transition-colors">Baixar Mapeamento</a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileList = document.getElementById('file-list');
+        const submitButton = document.getElementById('submit-button');
+        const uploadForm = document.getElementById('upload-form');
+
+        let fileStore = [];
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-blue-500', 'bg-blue-50');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+            addFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', () => addFiles(fileInput.files));
+
+        function addFiles(files) {
+            for (const file of files) {
+                if (!fileStore.some(f => f.name === file.name && f.size === file.size)) {
+                    fileStore.push(file);
+                }
+            }
+            updateFileInput();
+        }
+
+        function removeFile(index) {
+            fileStore.splice(index, 1);
+            updateFileInput();
+        }
+
+        function updateFileInput() {
+            const dataTransfer = new DataTransfer();
+            fileStore.forEach(file => dataTransfer.items.add(file));
+            fileInput.files = dataTransfer.files;
+            updateFileListDisplay();
+        }
+
+        function updateFileListDisplay() {
+            fileList.innerHTML = '';
+            if (fileStore.length > 0) {
+                submitButton.disabled = false;
+            } else {
+                submitButton.disabled = true;
+            }
+
+            fileStore.forEach((file, index) => {
+                const listItem = document.createElement('div');
+                listItem.className = 'file-list-item bg-gray-100 p-3 rounded-lg flex items-center justify-between text-sm';
+                listItem.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span class="font-medium text-gray-700">${file.name}</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-gray-500">${(file.size / 1024).toFixed(1)} KB</span>
+                        <button type="button" onclick="removeFile(${index})" class="text-red-500 hover:text-red-700">&times;</button>
+                    </div>
+                `;
+                fileList.appendChild(listItem);
+            });
+        }
+        
+        uploadForm.addEventListener('submit', () => {
+            if (fileStore.length > 0) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = 'Processando...';
+            }
+        });
+    </script>
+</body>
+</html>

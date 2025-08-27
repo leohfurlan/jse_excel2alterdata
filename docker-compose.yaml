@@ -1,0 +1,32 @@
+# docker-compose.yml
+# -----------------------------------------------------------------------------
+# Define a stack para ser implantada no Portainer.
+# -----------------------------------------------------------------------------
+version: '3.8'
+
+services:
+  # Nome do nosso serviço/container
+  excel-converter:
+    # Instrução para construir a imagem a partir do Dockerfile no diretório atual
+    build: .
+    container_name: excel-converter-app
+    restart: unless-stopped
+    networks:
+      # Conecta o container à rede externa do Traefik
+      - traefik-public
+    labels:
+      # --- Configuração do Traefik ---
+      - "traefik.enable=true"
+      # Define a URL de acesso. Altere 'converter.seu-dominio.com' para o seu domínio real.
+      - "traefik.http.routers.excel-converter.rule=Host(`jse.atospd.com`)"
+      # Define que este serviço usará o entrypoint 'websecure' (HTTPS/443)
+      - "traefik.http.routers.excel-converter.entrypoints=websecure"
+      # Aponta para a porta interna do container que o Traefik deve usar
+      - "traefik.http.services.excel-converter.loadbalancer.server.port=8000"
+      # Associa o resolvedor de certificados SSL (ex: Let's Encrypt) que você configurou no Traefik
+      - "traefik.http.routers.excel-converter.tls.certresolver=le"
+
+networks:
+  # Declara que 'traefik-public' é uma rede pré-existente no Docker/Portainer
+  traefik-public:
+    external: true

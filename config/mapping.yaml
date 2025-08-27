@@ -1,0 +1,33 @@
+# -------------------------------
+# Mapping focado (Alterdata)
+# Preencher SOMENTE: Data, Valor, Número de Documento, CPF/CNPJ
+# Demais campos ficam em branco para o Alterdata preencher depois.
+# -------------------------------
+
+required_columns:
+  - CodLancAutom
+  - Conta Débito
+  - Conta Crédito
+  - Data
+  - Valor
+  - CodHistórico
+  - Número de Documento
+  - Imóvel
+  - Tipo de documento
+  - CPF/CNPJ
+
+posting_rules:
+  enabled: false
+
+synonyms:
+  Data: ["data","dt","emissao","pagto","pagto.","lancamento","dt_lcto","competencia","data_movimento","data_da_operacao", "data_pagamento", "dt_pagamento", "dt_pagto", "pagamento", "data_de_pagamento", "baixa", "dt_baixa", "liquidacao", "liquidação"]
+  Valor: ["valor","cobranca","s_cobranca","movimento","total","valor_total","vlr","valor_liquido","valor_bruto"]
+  Número de Documento: ["numero_de_documento","n_doc","num_doc","documento","nf","nfe","nf-e","nota_fiscal","nr.","comprovante", "fiscal"]
+  CPF/CNPJ: ["cpf_cnpj","cpf","cnpj","doc_fiscal","documento_fiscal","inscricao"]
+
+  CodLancAutom: []
+  Conta Débito: []
+  Conta Crédito: []
+  CodHistórico: []
+  Imóvel: []
+  Tipo de documento: []
