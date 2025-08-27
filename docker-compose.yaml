@@ -16,7 +16,7 @@ services:
       - "traefik.http.routers.excel-converter.rule=Host(`jse.atospd.com`)"
       - "traefik.http.routers.excel-converter.entrypoints=websecure"
       - "traefik.http.services.excel-converter.loadbalancer.server.port=8000"
-      - "traefik.http.routers.excel-converter.tls.certresolver=myresolver"
+      - "traefik.http.routers.excel-converter.tls.certresolver=le"
 
 networks:
   traefik-public:
