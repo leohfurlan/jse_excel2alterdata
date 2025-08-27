@@ -21,7 +21,9 @@ COPY . .
 EXPOSE 8000
 
 # 6. Comando de Execução: Define como iniciar a aplicação usando Gunicorn.
-# <-- CORREÇÃO AQUI
-# Em vez de chamar 'gunicorn' diretamente, usamos 'python -m gunicorn'.
-# Isso garante que o executável seja encontrado no ambiente Python.
-CMD ["python", "-m", "gunicorn", "--bind", "0.0.0.0:8000", "app:app"]
+# --- MUDANÇA PRINCIPAL AQUI ---
+# Adicionamos parâmetros de log para forçar a exibição de erros no log do container.
+# --log-level "debug": Mostra mensagens detalhadas.
+# --access-logfile "-": Envia logs de acesso para a saída padrão.
+# --error-logfile "-": Envia logs de erro para a saída padrão (o mais importante!).
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--log-level", "debug", "--access-logfile", "-", "--error-logfile", "-", "app:app"]
