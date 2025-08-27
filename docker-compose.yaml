@@ -1,24 +1,17 @@
 # docker-compose.yml
 # -----------------------------------------------------------------------------
 # Define a stack para ser implantada no Portainer.
-# VERSÃO CORRIGIDA
+# VERSÃO COM VOLUME NOMEADO (CORREÇÃO FINAL)
 # -----------------------------------------------------------------------------
 version: '3.8'
 
 services:
-  # Nome do nosso serviço/container
   excel-converter:
-    # --- MUDANÇA PRINCIPAL ---
-    # Em vez de puxar uma imagem pronta, instruímos o Docker a construir
-    # uma nova imagem a partir do Dockerfile presente neste mesmo diretório.
     build: .
-    # Damos um nome para a imagem construída localmente para fácil identificação.
     image: excel-converter-local:latest
     container_name: excel-converter-app
     restart: unless-stopped
     
-    # O healthcheck que você adicionou está ótimo e será mantido.
-    # Ele verifica se a aplicação web está respondendo na porta 8000.
     healthcheck:
       test: ["CMD", "python", "-c", "import sys, urllib.request; sys.exit(0) if urllib.request.urlopen('http://localhost:8000/').getcode() == 200 else sys.exit(1)"]
       interval: 30s
@@ -26,15 +19,14 @@ services:
       retries: 5
       start_period: 60s
 
-    # --- BOA PRÁTICA (OPCIONAL) ---
-    # Mapeamos a pasta de saída para o sistema de arquivos do host.
-    # Isso permite que os arquivos gerados persistam mesmo se o container for removido
-    # e facilita o acesso aos resultados.
+    # --- MUDANÇA PRINCIPAL AQUI ---
+    # Trocamos o "bind mount" por um "volume nomeado".
+    # O Docker irá gerenciar um volume chamado "excel-converter-outputs"
+    # e mapeá-lo para a pasta de saída da aplicação.
     volumes:
-      - ./temp_outputs:/app/temp_outputs
+      - excel-converter-outputs:/app/temp_outputs
 
     networks:
-      # Conecta o container à rede externa do Traefik
       - traefik-public
     labels:
       # --- Configuração do Traefik (sem alterações) ---
@@ -51,6 +43,10 @@ services:
       - "traefik.http.services.excel-converter.loadbalancer.server.port=8000"
 
 networks:
-  # Declara que 'traefik-public' é uma rede pré-existente no Docker/Portainer
   traefik-public:
     external: true
+
+# --- NOVA SEÇÃO ADICIONADA ---
+# Declaramos nosso volume nomeado aqui.
+volumes:
+  excel-converter-outputs:
