@@ -11,6 +11,17 @@ services:
     image: leonardofurlan/excel-converter-app:latest
     container_name: excel-converter-app
     restart: unless-stopped
+    
+    # <-- AJUSTE ADICIONADO AQUI
+    # Define uma verificação de saúde explícita para garantir que o container não seja reiniciado incorretamente.
+    # Ela verifica se a aplicação web está respondendo na porta 8000 a cada 30 segundos.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys, urllib.request; sys.exit(0) if urllib.request.urlopen('http://localhost:8000/').getcode() == 200 else sys.exit(1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
     networks:
       # Conecta o container à rede externa do Traefik
       - traefik-public
@@ -29,11 +40,9 @@ services:
       # --- Roteamento HTTP com redirecionamento ---
       - "traefik.http.routers.excel-converter-http.rule=Host(`jse.atospd.com`)"
       - "traefik.http.routers.excel-converter-http.entrypoints=http"
-      # CORREÇÃO: Removido o 'p' extra do nome do middleware
       - "traefik.http.routers.excel-converter-http.middlewares=https-redirect" 
 
       # --- Serviço ---
-      # CORREÇÃO: A porta interna do container é 8000, não 80.
       - "traefik.http.services.excel-converter.loadbalancer.server.port=8000"
 
 networks:
